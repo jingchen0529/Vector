@@ -202,7 +202,10 @@ abstract class GitCommitHashValueSource : ValueSource<String, GitCommitHashValue
 // the string here and the property name have to stay in step by hand now.
 //
 // This defers the execution of the git commands and allows Gradle to cache the results.
-val versionCodeProvider = providers.of(GitCommitCountValueSource::class.java) {}
+val versionCodeProvider =
+    providers.environmentVariable("VECTOR_VERSION_CODE").orElse(
+        providers.of(GitCommitCountValueSource::class.java) {}
+    )
 val versionHashProvider =
     providers.of(GitCommitHashValueSource::class.java) {
         // Set on every GitHub Actions runner and on nothing else, so the presence of either is
@@ -216,7 +219,10 @@ val versionHashProvider =
         )
         parameters.buildCommit.set(providers.environmentVariable("VECTOR_BUILD_COMMIT").orElse(""))
     }
-val versionNameProvider = providers.of(GitLatestTagValueSource::class.java) {}
+val versionNameProvider =
+    providers.environmentVariable("VECTOR_VERSION_NAME").orElse(
+        providers.of(GitLatestTagValueSource::class.java) {}
+    )
 
 val injectedPackageName = "com.android.shell"
 val injectedPackageUid = 2000

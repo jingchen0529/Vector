@@ -1,0 +1,26 @@
+{
+  "schema": "vector-owned-fork-release/v1",
+  "release_repository": "jingchen0529/Vector",
+  "release_tag": "v2.2-3080-zhixi",
+  "source_commit": "88f8e1faa8b4e7ce20aefabe9c295cd746ea038e",
+  "version_name": "2.2",
+  "version_code": 3080,
+  "target_profile": "2312DRAABC-gold-cn-miui14",
+  "rom": "V14.0.11.0.TNQCNXM",
+  "android": "13",
+  "bootloader_state": "unlocked-only",
+  "oem_avb_trust": false,
+  "release_signing": {
+    "android_keystore": "GitHub Actions secret KEY_STORE",
+    "artifact_provenance": "GitHub Actions run for this repository and tag",
+    "private_key_location": "GitHub Actions secret storage; never committed"
+  },
+  "scope": [
+    "com.zhixi.wechatbot -> com.tencent.mm"
+  ],
+  "notes": [
+    "This is a project-owned fork release for the named unlocked device profile.",
+    "It is not an OEM-signed image and must not be used as evidence for locked-bootloader release.",
+    "The build host and its network address are not runtime dependencies."
+  ]
+}

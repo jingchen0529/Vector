@@ -33,6 +33,10 @@ jobs:
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
       CCACHE_BASEDIR: "${{ github.workspace }}"
+      # The owned fork deliberately keeps the frozen v2.2/3080 identity even though
+      # the fork's master branch may contain later commits.
+      VECTOR_VERSION_NAME: "2.2"
+      VECTOR_VERSION_CODE: "3080"
 
     steps:
       - name: Checkout
@@ -136,6 +140,42 @@ jobs:
           unzip zygisk/release/Vector-v*-Release.zip -d Vector-Release
           unzip zygisk/release/Vector-v*-Debug.zip -d Vector-Debug
 
+      - name: Export owned release certificate and hashes
+        if: ${{ success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          ALIAS: ${{ secrets.ALIAS }}
+          TAG: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -s key.jks
+          release_zip="$(find zygisk/release -maxdepth 1 -name 'Vector-v*-Release.zip' -print -quit)"
+          test -n "$release_zip"
+          mkdir -p release-assets
+          keytool -exportcert -rfc \
+            -keystore key.jks \
+            -storepass "$KEY_STORE_PASSWORD" \
+            -alias "$ALIAS" \
+            -file release-assets/vector-release-certificate.pem
+          sha256sum "$release_zip" > release-assets/vector-release.sha256
+          sha256sum release-assets/vector-release-certificate.pem > release-assets/vector-release-certificate.sha256
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('release-assets/vector-release-signing-record.json').write_text(json.dumps({
+              'schema': 'vector-owned-fork-signing/v1',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'tag': os.environ['TAG'],
+              'source_commit': os.environ['COMMIT'],
+              'version_name': '2.2',
+              'version_code': 3080,
+              'android_artifact': 'Vector-v2.2-3080-Release.zip',
+              'certificate': 'vector-release-certificate.pem',
+              'verification': 'Verify the APK certificate chain in the ZIP and compare the supplied SHA-256 files.'
+          }, indent=2) + '\n')
+          PY
+
       - name: Upload zygisk release
         uses: actions/upload-artifact@v7
         with:
@@ -200,7 +240,11 @@ jobs:
             --title "Vector ${TAG}" \
             --notes "$notes" \
             zygisk/release/Vector-v*-Release.zip \
-            zygisk/release/Vector-v*-Debug.zip
+            zygisk/release/Vector-v*-Debug.zip \
+            release-assets/vector-release-certificate.pem \
+            release-assets/vector-release-certificate.sha256 \
+            release-assets/vector-release.sha256 \
+            release-assets/vector-release-signing-record.json
 
       # --- canary distribution ---------------------------------------------------------------
       #
